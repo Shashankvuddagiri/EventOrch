@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Admin Dashboard | EventOrch</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/appwrite@17.0.0"></script>
+  <script src="appwrite.js" defer></script>
+  <script src="auth.js" defer></script>
+  <script src="database.js" defer></script>
+</head>
+<body class="admin-page">
+  <div class="admin-layout">
+    <aside class="sidebar">
+      <div class="logo">EventOrch Admin</div>
+      <nav class="sidebar-nav">
+        <a href="#" class="sidebar-link active" onclick="switchAdminTab('dashboard')">
+          <span>📊</span> Dashboard
+        </a>
+        <a href="#" class="sidebar-link" onclick="switchAdminTab('events')">
+          <span>📅</span> Manage Events
+        </a>
+        <a href="#" class="sidebar-link" onclick="switchAdminTab('registrations')">
+          <span>👥</span> Registrations
+        </a>
+        <a href="index.html" class="sidebar-link">
+          <span>🏠</span> Back to Site
+        </a>
+      </nav>
+      <div style="margin-top: auto;">
+        <button id="logoutBtn" class="btn btn-ghost" style="width: 100%;">Sign Out</button>
+      </div>
+    </aside>
+
+    <main class="admin-main">
+      <canvas id="particle-canvas" aria-hidden="true"></canvas>
+
+      <!-- Dashboard View -->
+      <div id="view-dashboard" class="admin-view">
+        <header class="admin-header">
+            <div>
+                <h1>Executive Summary</h1>
+                <p class="muted">High-level overview of platform engagement.</p>
+            </div>
+            <button class="btn btn-primary" onclick="switchAdminTab('events')">Add New Event</button>
+        </header>
+
+        <div class="grid">
+            <div class="card">
+                <h3>Global Reach</h3>
+                <div style="font-size: 3.5rem; font-weight: 800; margin: 1rem 0;" id="stat-regs">0</div>
+                <p class="muted">Total Attendee Registrations</p>
+            </div>
+            <div class="card">
+                <h3>Active Orchestrations</h3>
+                <div style="font-size: 3.5rem; font-weight: 800; margin: 1rem 0;" id="stat-events">0</div>
+                <p class="muted">Currently Published Events</p>
+            </div>
+            <div class="card">
+                <h3>Data Export</h3>
+                <p class="muted">Generate a comprehensive report of all platform activities in CSV format.</p>
+                <button id="download" class="btn btn-ghost" style="margin-top: 1.5rem; width: 100%;">Export Dataset</button>
+            </div>
+        </div>
+
+        <section class="card" style="margin-top: 2rem;">
+            <h2>Recent Registrations</h2>
+            <div class="admin-table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Attendee</th>
+                            <th>Email</th>
+                            <th>Event</th>
+                            <th>Date</th>
+                        </tr>
+                    </thead>
+                    <tbody id="recent-regs">
+                        <tr><td colspan="4" class="loading">Fetching records...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+      </div>
+
+      <!-- Events Management View -->
+      <div id="view-events" class="admin-view hidden">
+        <header class="admin-header">
+            <div>
+                <h1>Event Orchestration</h1>
+                <p class="muted">Create and manage upcoming workshops and summits.</p>
+            </div>
+        </header>
+
+        <div class="grid" style="grid-template-columns: 350px 1fr;">
+            <section class="card">
+                <h2>New Orchestration</h2>
+                <form id="event-form" class="auth-form">
+                    <input type="text" id="ev-title" placeholder="Event Title" required>
+                    <div class="form-row">
+                        <select id="ev-category" style="padding:12px; border-radius:10px; border:1px solid rgba(255,255,255,0.1); background:var(--card); color:inherit;">
+                            <option value="Workshop">Workshop</option>
+                            <option value="Summit">Summit</option>
+                            <option value="Meetup">Meetup</option>
+                        </select>
+                        <input type="number" id="ev-capacity" placeholder="Capacity" required>
+                    </div>
+                    <input type="date" id="ev-date" required>
+                    <textarea id="ev-desc" placeholder="Describe the event impact..." style="padding:12px; border-radius:10px; border:1px solid rgba(255,255,255,0.1); background:var(--card); color:inherit; min-height:100px"></textarea>
+                    <button type="submit" class="btn btn-primary">Publish Event</button>
+                </form>
+                <p id="ev-msg" class="muted" style="margin-top:10px; text-align: center;"></p>
+            </section>
+
+            <section class="card">
+                <h2>Active Events</h2>
+                <div class="admin-table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Title</th>
+                                <th>Type</th>
+                                <th>Date</th>
+                                <th>Cap</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="admin-events-list">
+                            <!-- Events load here -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </div>
+      </div>
+
+      <!-- All Registrations View -->
+      <div id="view-registrations" class="admin-view hidden">
+        <header class="admin-header">
+            <div>
+                <h1>Full Registry</h1>
+                <p class="muted">Detailed list of all session entries across the platform.</p>
+            </div>
+        </header>
+        <section class="card">
+            <div class="admin-table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Attendee</th>
+                            <th>Email</th>
+                            <th>Event</th>
+                            <th>ID</th>
+                            <th>Timestamp</th>
+                        </tr>
+                    </thead>
+                    <tbody id="full-regs">
+                        <!-- Full list here -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+      </div>
+
+    </main>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', async () => {
+        // Wait for scripts to load
+        let attempts = 0;
+        const checkReady = setInterval(() => {
+            if (window.auth && window.db) {
+                clearInterval(checkReady);
+                initAdmin();
+            }
+            if (++attempts > 50) clearInterval(checkReady);
+        }, 100);
+    });
+
+    async function initAdmin() {
+        const user = await window.auth.getUser();
+        const isAdmin = await window.auth.isAdmin();
+        
+        if (!user || !isAdmin) {
+            window.location.href = 'index.html';
+            return;
+        }
+        
+        document.getElementById('logoutBtn').onclick = () => window.auth.logout();
+
+        // Initial Data Load
+        refreshDashboard();
+        loadAdminEvents();
+
+        // Form Handler
+        document.getElementById('event-form').onsubmit = async (e) => {
+            e.preventDefault();
+            const msg = document.getElementById('ev-msg');
+            const data = {
+                title: document.getElementById('ev-title').value,
+                description: document.getElementById('ev-desc').value,
+                date: document.getElementById('ev-date').value,
+                capacity: parseInt(document.getElementById('ev-capacity').value),
+                category: document.getElementById('ev-category').value
+            };
+
+            try {
+                msg.textContent = 'Publishing...';
+                await window.db.createEvent(data);
+                msg.textContent = 'Event published!';
+                e.target.reset();
+                refreshDashboard();
+                loadAdminEvents();
+            } catch (err) {
+                msg.textContent = 'Discovery Error: ' + err.message;
+            }
+        };
+
+        // CSV Download
+        document.getElementById('download').onclick = async () => {
+            const regs = await window.db.getAllRegistrations();
+            const csv = ['Name,Email,Event,Date'].concat(regs.map(r=>`${r.userName},${r.userEmail},${r.eventTitle},${r.timestamp}`)).join('\n');
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+            a.download = 'platform_extract_' + Date.now() + '.csv';
+            a.click();
+        };
+
+        if(typeof initParticles === 'function') initParticles();
+    }
+
+    async function refreshDashboard() {
+        const regs = await window.db.getAllRegistrations();
+        const events = await window.db.getEvents();
+        
+        document.getElementById('stat-regs').textContent = regs.length;
+        document.getElementById('stat-events').textContent = events.length;
+
+        const recentTbody = document.getElementById('recent-regs');
+        const fullTbody = document.getElementById('full-regs');
+        
+        [recentTbody, fullTbody].forEach(tb => tb.innerHTML = '');
+
+        regs.forEach((reg, i) => {
+            const row = `<tr><td>${reg.userName}</td><td>${reg.userEmail}</td><td>${reg.eventTitle}</td><td>${new Date(reg.timestamp).toLocaleDateString()}</td></tr>`;
+            if(i < 5) recentTbody.innerHTML += row;
+            fullTbody.innerHTML += `<tr><td>${reg.userName}</td><td>${reg.userEmail}</td><td>${reg.eventTitle}</td><td><code>${reg.$id}</code></td><td>${new Date(reg.timestamp).toLocaleString()}</td></tr>`;
+        });
+    }
+
+    async function loadAdminEvents() {
+        const list = document.getElementById('admin-events-list');
+        const events = await window.db.getEvents();
+        list.innerHTML = '';
+        
+        events.forEach(ev => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td><strong>${ev.title}</strong></td>
+                <td><span class="badge ${ev.category.toLowerCase()}">${ev.category}</span></td>
+                <td>${new Date(ev.date).toLocaleDateString()}</td>
+                <td>${ev.capacity}</td>
+                <td>
+                    <button class="btn btn-ghost" style="padding: 5px 10px; scale: 0.8" onclick="deleteEvent('${ev.$id}')">Delete</button>
+                </td>
+            `;
+            list.appendChild(tr);
+        });
+    }
+
+    window.deleteEvent = async (id) => {
+        if(!confirm('Permanently delete this event?')) return;
+        try {
+            await window.db.deleteEvent(id);
+            loadAdminEvents();
+            refreshDashboard();
+        } catch (e) { alert(e.message); }
+    };
+
+    window.switchAdminTab = (tab) => {
+        document.querySelectorAll('.admin-view').forEach(v => v.classList.add('hidden'));
+        document.getElementById('view-' + tab).classList.remove('hidden');
+        document.querySelectorAll('.sidebar-link').forEach(l => l.classList.remove('active'));
+        event.currentTarget.classList.add('active');
+    };
+
+    function initParticles() {
+        const canvas = document.getElementById('particle-canvas');
+        if(!canvas) return;
+        const ctx = canvas.getContext('2d');
+        let w, h, particles=[];
+        const resize = ()=>{ w = canvas.width = innerWidth; h = canvas.height = innerHeight; }
+        window.addEventListener('resize', resize); resize();
+        function create(){
+            particles = Array.from({length: Math.floor((w*h)/100000)}, ()=>({
+            x: Math.random()*w, y: Math.random()*h, r: Math.random()*1.4+0.4, vx:(Math.random()-.5)/2, vy:(Math.random()-.5)/2
+            }));
+        }
+        create();
+        function tick(){
+            ctx.clearRect(0,0,w,h);
+            ctx.fillStyle = 'rgba(255,255,255,0.04)';
+            particles.forEach(p=>{
+            p.x += p.vx; p.y += p.vy;
+            if(p.x<0) p.x=w; if(p.x>w) p.x=0; if(p.y<0) p.y=h; if(p.y>h) p.y=0;
+            ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,Math.PI*2); ctx.fill();
+            });
+            requestAnimationFrame(tick);
+        }
+        tick();
+    }
+  </script>
+</body>
+</html>

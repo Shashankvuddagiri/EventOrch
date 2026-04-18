@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>EventOrch | Premium Event Orchestration</title>
+  <link rel="stylesheet" href="style.css">
+  <!-- Appwrite SDK -->
+  <script src="https://cdn.jsdelivr.net/npm/appwrite@17.0.0"></script>
+  <!-- Logic Scripts -->
+  <script src="appwrite.js" defer></script>
+  <script src="auth.js" defer></script>
+  <script src="database.js" defer></script>
+  <script src="registration.js" defer></script>
+  <script src="script.js" defer></script>
+  <meta name="theme-color" content="#0b1220">
+</head>
+<body>
+  <canvas id="particle-canvas" aria-hidden="true"></canvas>
+
+  <nav class="nav">
+    <div class="logo">EventOrch</div>
+    <ul class="nav-links">
+      <li><a href="#features">Features</a></li>
+      <li><a href="#events">Events</a></li>
+      <li><a href="#contact">Contact</a></li>
+    </ul>
+    <div class="actions">
+      <button id="authBtn" class="btn btn-ghost">Login / Signup</button>
+      <button id="themeToggle" aria-pressed="false" title="Toggle dark mode">🌙</button>
+    </div>
+  </nav>
+
+  <header class="hero" id="hero-section">
+    <div class="container" id="hero-container">
+      <h1 class="headline" id="hero-headline">Seamless Event Orchestration</h1>
+      <p class="subhead" id="hero-subhead">Powered by Appwrite. Built for world-class creators.</p>
+      <div class="cta" id="hero-cta">
+        <a class="btn btn-primary" href="#events">Explore Events</a>
+        <a class="btn btn-ghost" href="#contact">Contact Support</a>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section id="features" class="features container reveal">
+      <h2>Why Cloud Events?</h2>
+      <div class="grid">
+        <article class="feature card tilt">
+          <h3>Secure Authentication</h3>
+          <p>Managed by Appwrite Auth for enterprise-grade security.</p>
+        </article>
+        <article class="feature card tilt">
+          <h3>Real-time Logic</h3>
+          <p>Instant registration status and dynamic capacity tracking.</p>
+        </article>
+        <article class="feature card tilt">
+          <h3>Premium UI</h3>
+          <p>Glassmorphic design with smooth motion and accessibility.</p>
+        </article>
+      </div>
+    </section>
+
+    <section id="events" class="events container">
+      <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 2rem;">
+        <h2 class="reveal">Featured Events</h2>
+        <div class="filter-tabs reveal">
+            <button class="badge active" onclick="filterEvents('all')">All</button>
+            <button class="badge workshop" onclick="filterEvents('Workshop')">Workshops</button>
+            <button class="badge summit" onclick="filterEvents('Summit')">Summits</button>
+            <button class="badge meetup" onclick="filterEvents('Meetup')">Meetups</button>
+        </div>
+      </div>
+      <div id="events-grid" class="cards">
+        <div class="loading">Loading amazing events...</div>
+      </div>
+    </section>
+
+    <section id="contact" class="inquiry-section reveal">
+      <div class="container">
+        <div class="inquiry-grid">
+            <div class="inquiry-text">
+                <span class="badge">Stay Connected</span>
+                <h2 style="font-size: 2.5rem; margin: 1rem 0;">Ready to orchestrate your next event?</h2>
+                <p class="muted">Whether you have questions about our platform or need a custom solution, our team is here to help you scale your ambitions.</p>
+                
+                <div style="margin-top: 2rem; display: flex; flex-direction: column; gap: 15px;">
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <span style="color: var(--accent);">●</span> 24/7 Priority Support
+                    </div>
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <span style="color: var(--accent);">●</span> Enterprise-grade Infrastructure
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-card">
+                <form id="contactForm" class="auth-form">
+                    <div class="form-row">
+                        <input type="text" id="name" placeholder="Full name" required>
+                        <input type="email" id="email" placeholder="Email address" required>
+                    </div>
+                    <textarea id="reason" placeholder="Tell us about your event needs..." style="padding:12px; border-radius:12px; border:1px solid rgba(255,255,255,0.1); background:var(--card); color:inherit; min-height:100px; margin-bottom: 15px;"></textarea>
+                    <button type="button" class="btn btn-primary" id="submitBtn" style="width: 100%;">Initiate Inquiry</button>
+                    <p id="msg" class="muted" style="margin-top: 15px; text-align: center;"></p>
+                </form>
+            </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <div id="admin-link-container" style="margin-bottom: 2rem;"></div>
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+          <div class="logo">EventOrch</div>
+          <div class="muted">© <span id="year"></span> Citizen Platform. All rights reserved.</div>
+          <div style="display: flex; gap: 20px;">
+              <a href="#" class="muted">Privacy</a>
+              <a href="#" class="muted">Terms</a>
+          </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Auth Modal -->
+  <div id="auth-modal" class="modal" role="dialog" aria-modal="true" aria-hidden="true">
+    <div class="modal-panel">
+      <button class="modal-close" onclick="closeAuthModal()">✕</button>
+      <div class="auth-tabs">
+        <button id="tab-login" class="active" onclick="showAuthTab('login')">Login</button>
+        <button id="tab-signup" onclick="showAuthTab('signup')">Signup</button>
+      </div>
+      
+      <div id="login-form" class="auth-form">
+        <h2>Welcome Back</h2>
+        <p class="muted">Secure your spot at the next big event.</p>
+        <input type="email" id="login-email" placeholder="Email">
+        <input type="password" id="login-password" placeholder="Password">
+        <button onclick="handleLogin()" class="btn btn-primary">Sign In</button>
+      </div>
+
+      <div id="signup-form" class="auth-form hidden">
+        <h2>Create Account</h2>
+        <p class="muted">Join thousands of creators worldwide.</p>
+        <input type="text" id="signup-name" placeholder="Full Name">
+        <input type="email" id="signup-email" placeholder="Email">
+        <input type="password" id="signup-password" placeholder="Password">
+        <button onclick="handleSignup()" class="btn btn-primary">Get Started</button>
+      </div>
+      <p id="auth-msg" class="muted" style="text-align: center;"></p>
+    </div>
+  </div>
+
+  <!-- Registration Modal -->
+  <div id="reg-modal" class="modal" role="dialog" aria-modal="true" aria-hidden="true">
+    <div class="modal-panel">
+      <button class="modal-close" onclick="closeRegModal()">✕</button>
+      <h2>Confirm Spot</h2>
+      <div id="reg-event-details">
+        <div id="reg-badge" class="badge">Workshop</div>
+        <h3 id="reg-title" style="margin: 5px 0 10px 0;"></h3>
+        <p id="reg-desc" class="muted" style="line-height: 1.5;"></p>
+        <div class="metadata" style="display: flex; gap: 15px; margin-top: 15px; font-weight: 600; color: var(--accent);">
+          <span id="reg-date"></span>
+          <span id="reg-capacity"></span>
+        </div>
+      </div>
+      <div class="form-actions" style="margin-top: 25px;">
+        <button id="confirm-reg-btn" class="btn btn-primary" style="width: 100%;">Register Now</button>
+      </div>
+      <p id="reg-msg" class="muted" style="text-align: center; margin-top: 15px;"></p>
+    </div>
+  </div>
+
+  <!-- My Tickets Modal -->
+  <div id="tickets-modal" class="modal" role="dialog" aria-modal="true" aria-hidden="true">
+    <div class="modal-panel" style="width: min(600px, 94%);">
+      <button class="modal-close" onclick="closeTicketsModal()">✕</button>
+      <h2>My Event Tickets</h2>
+      <p class="muted">View and manage your upcoming event entries.</p>
+      
+      <div id="tickets-list" style="display: flex; flex-direction: column; gap: 15px; margin-top: 20px; max-height: 400px; overflow-y: auto;">
+        <!-- Tickets load here -->
+      </div>
+    </div>
+  </div>
+</body>
+</html>
+>
+</html>
