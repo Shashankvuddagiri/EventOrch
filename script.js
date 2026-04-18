@@ -1,6 +1,6 @@
 /**
- * EventOrch Core Logic
- * Clean, production-ready implementation with dynamic user states.
+ * EventOrch Core Logic v2
+ * Production-ready implementation with role-based redirection and storage integration.
  */
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -33,7 +33,14 @@ document.addEventListener('DOMContentLoaded', async () => {
             currentUser = await window.auth.getUser();
             const isAdmin = await window.auth.isAdmin();
 
+            // Seamless Role-Based Flow
             if (currentUser) {
+                // If on home but is admin, redirect to admin
+                if (isAdmin && !window.location.pathname.includes('admin.html')) {
+                    window.location.href = 'admin.html';
+                    return;
+                }
+
                 // Logged In State
                 authBtn.textContent = currentUser.name;
                 authBtn.onclick = null;
@@ -103,15 +110,18 @@ document.addEventListener('DOMContentLoaded', async () => {
             card.className = 'card reveal tilt';
             const dateStr = new Date(ev.date).toLocaleDateString();
             
+            // Storage Integration: Use imageUrl or fallback
+            const bannerImg = ev.imageUrl || 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800&q=80';
+
             card.innerHTML = `
+                <div class="card-banner" style="height:160px; background: url('${bannerImg}') center/cover; border-radius:12px; margin-bottom:15px"></div>
                 <span class="badge ${ev.category.toLowerCase()}">${ev.category}</span>
-                <h3>${ev.title}</h3>
-                <p class="muted">${ev.description}</p>
+                <h3 style="margin-top:10px">${ev.title}</h3>
+                <p class="muted" style="font-size:0.9rem">${ev.description}</p>
                 <div class="metadata" style="margin-top:20px; font-weight:600; font-size:0.9rem">
                     <span>📅 ${dateStr}</span> | 
-                    <span style="color:var(--accent)">👥 Limit: ${ev.capacity}</span>
+                    <span style="color:var(--accent)">👥 Space: ${ev.capacity}</span>
                 </div>
-                <!-- Call to Registration Module -->
                 <button class="btn btn-primary" style="margin-top:24px; width:100%" onclick="window.Registration.openModal('${ev.$id}')">Secure Spot</button>
             `;
             eventsGrid.appendChild(card);
@@ -151,7 +161,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             authMsg.textContent = 'Authenticating...';
             await window.auth.login(email, pass);
             authMsg.textContent = 'Identity Verified. Syncing...';
-            setTimeout(() => location.reload(), 1000);
+            
+            // Let the updateUIState handle redirection or refresh
+            setTimeout(() => location.reload(), 800);
         } catch (err) {
             authMsg.textContent = err.message;
         }
@@ -200,6 +212,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         <div>
                             <h4 style="margin:0; font-size:1.1rem">${r.eventTitle}</h4>
                             <p class="muted" style="margin:8px 0 0 0; font-size:0.85rem">${new Date(r.timestamp).toLocaleString()}</p>
+                            <p class="muted" style="font-size:0.75rem; color:var(--accent); margin-top:5px">Registered as: ${r.phone} | ${r.department}</p>
                         </div>
                         <span class="badge" style="background:var(--accent-glow); color:var(--accent)">VERIFIED</span>
                     </div>
@@ -220,16 +233,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     
     await updateUIState();
     await loadEvents();
-
-    // Support Form
-    const submitBtn = document.getElementById('submitBtn');
-    if (submitBtn) {
-        submitBtn.onclick = () => {
-            const msg = document.getElementById('msg');
-            msg.textContent = 'Message Received. We will reach out within 24 hours.';
-            document.getElementById('contactForm').reset();
-        };
-    }
 
     // Theme Support
     const tToggle = document.getElementById('themeToggle');

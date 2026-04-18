@@ -167,8 +167,18 @@
           <span id="reg-capacity"></span>
         </div>
       </div>
-      <div class="form-actions" style="margin-top: 25px;">
-        <button id="confirm-reg-btn" class="btn btn-primary" style="width: 100%;">Register Now</button>
+      <div class="auth-form" id="reg-form" style="margin-top: 25px;">
+          <input type="tel" id="reg-phone" placeholder="Phone Number" required>
+          <div class="form-row" style="margin-top: 10px;">
+              <input type="text" id="reg-dept" placeholder="Department" required>
+              <select id="reg-role" style="padding:12px; border-radius:10px; border:1px solid rgba(255,255,255,0.1); background:var(--card); color:inherit;">
+                  <option value="Student">Student</option>
+                  <option value="Faculty">Faculty</option>
+                  <option value="Professional">Professional</option>
+                  <option value="Other">Other</option>
+              </select>
+          </div>
+          <button id="confirm-reg-btn" class="btn btn-primary" style="width: 100%; margin-top: 20px;">Register Now</button>
       </div>
       <p id="reg-msg" class="muted" style="text-align: center; margin-top: 15px;"></p>
     </div>

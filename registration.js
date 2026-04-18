@@ -1,11 +1,12 @@
 /**
- * EventOrch Registration Module
- * Handles the secure spot booking flow.
+ * EventOrch Registration Module v2
+ * Handles expanded metadata (phone, department, role).
  */
 
 window.Registration = (function() {
     let selectedEventId = '';
     
+    // Modal & Alert Elements
     const regModal = document.getElementById('reg-modal');
     const regMsg = document.getElementById('reg-msg');
     const regTitle = document.getElementById('reg-title');
@@ -14,6 +15,11 @@ window.Registration = (function() {
     const regCap = document.getElementById('reg-capacity');
     const regBadge = document.getElementById('reg-badge');
     const confirmBtn = document.getElementById('confirm-reg-btn');
+
+    // Input Fields
+    const phoneInput = document.getElementById('reg-phone');
+    const deptInput = document.getElementById('reg-dept');
+    const roleInput = document.getElementById('reg-role');
 
     async function openModal(eventId) {
         try {
@@ -52,21 +58,37 @@ window.Registration = (function() {
         if (!selectedEventId) return;
         
         try {
+            // Validate inputs
+            const metadata = {
+                phone: phoneInput.value,
+                department: deptInput.value,
+                userRole: roleInput.value
+            };
+
+            if (!metadata.phone || !metadata.department) {
+                regMsg.textContent = 'Please fill in all details.';
+                return;
+            }
+
             confirmBtn.disabled = true;
             regMsg.textContent = 'Securing your spot...';
             
-            await window.db.registerForEvent(selectedEventId);
+            await window.db.registerForEvent(selectedEventId, metadata);
             
             regMsg.textContent = 'Success! Your ticket is ready.';
             
             // Auto-refresh tickets if list is open
-            if (typeof window.refreshTicketList === 'function') {
-                window.refreshTicketList();
+            if (typeof window.openTicketsModal === 'function') {
+                // Background refresh if needed, but the success message is main.
             }
 
             setTimeout(() => {
                 closeModal();
                 confirmBtn.disabled = false;
+                // Clear form
+                phoneInput.value = '';
+                deptInput.value = '';
+                roleInput.value = 'Student';
             }, 2000);
         } catch (e) {
             regMsg.textContent = e.message;
@@ -78,6 +100,9 @@ window.Registration = (function() {
     if (confirmBtn) {
         confirmBtn.onclick = handleConfirm;
     }
+
+    // Expose closeRegModal for the close button
+    window.closeRegModal = closeModal;
 
     return {
         openModal,

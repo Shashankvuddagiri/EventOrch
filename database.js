@@ -1,5 +1,6 @@
 /**
  * Database Logic for Event Management Platform
+ * v2: Integration with Appwrite Storage and Expanded Registration Data
  */
 const DB = {
     async getEvents() {
@@ -33,7 +34,7 @@ const DB = {
         }
     },
 
-    async registerForEvent(eventId) {
+    async registerForEvent(eventId, metadata = {}) {
         try {
             const user = await window.auth.getUser();
             if (!user) throw new Error('You must be logged in to register.');
@@ -59,7 +60,6 @@ const DB = {
                 eventId
             );
 
-            // Fetch current registration count for this event
             const countRes = await window.appwrite.databases.listDocuments(
                 window.appwrite.DB_ID,
                 window.appwrite.COL_REGISTRATIONS,
@@ -70,7 +70,7 @@ const DB = {
                 throw new Error('Sorry, this event is already full.');
             }
 
-            // 3. Create registration
+            // 3. Create registration with metadata
             const registration = await window.appwrite.databases.createDocument(
                 window.appwrite.DB_ID,
                 window.appwrite.COL_REGISTRATIONS,
@@ -81,6 +81,9 @@ const DB = {
                     userEmail: user.email,
                     eventId: eventId,
                     eventTitle: event.title,
+                    phone: metadata.phone || '',
+                    department: metadata.department || '',
+                    userRole: metadata.userRole || '',
                     timestamp: new Date().toISOString()
                 }
             );
@@ -92,7 +95,22 @@ const DB = {
         }
     },
 
-    // Admin Methods
+    // Admin & Storage Methods
+    async uploadImage(file) {
+        try {
+            const response = await window.appwrite.storage.createFile(
+                window.appwrite.BUCKET_ID,
+                window.appwrite.ID.unique(),
+                file
+            );
+            // Return public URL
+            return `${window.appwrite.client.config.endpoint}/storage/buckets/${window.appwrite.BUCKET_ID}/files/${response.$id}/view?project=${window.appwrite.client.config.project}`;
+        } catch (error) {
+            console.error('Upload Error:', error);
+            throw error;
+        }
+    },
+
     async createEvent(eventData) {
         try {
             return await window.appwrite.databases.createDocument(

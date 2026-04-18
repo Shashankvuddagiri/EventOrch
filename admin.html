@@ -48,24 +48,24 @@
 
         <div class="grid">
             <div class="card">
-                <h3>Global Reach</h3>
+                <h3>Global Attendee Count</h3>
                 <div style="font-size: 3.5rem; font-weight: 800; margin: 1rem 0;" id="stat-regs">0</div>
-                <p class="muted">Total Attendee Registrations</p>
+                <p class="muted">Total Unique Registrations</p>
             </div>
             <div class="card">
-                <h3>Active Orchestrations</h3>
+                <h3>Live Orchestrations</h3>
                 <div style="font-size: 3.5rem; font-weight: 800; margin: 1rem 0;" id="stat-events">0</div>
                 <p class="muted">Currently Published Events</p>
             </div>
             <div class="card">
                 <h3>Data Export</h3>
-                <p class="muted">Generate a comprehensive report of all platform activities in CSV format.</p>
-                <button id="download" class="btn btn-ghost" style="margin-top: 1.5rem; width: 100%;">Export Dataset</button>
+                <p class="muted">Extract complete registration registry for external analysis.</p>
+                <button id="download" class="btn btn-ghost" style="margin-top: 1.5rem; width: 100%;">Export CSV</button>
             </div>
         </div>
 
         <section class="card" style="margin-top: 2rem;">
-            <h2>Recent Registrations</h2>
+            <h2>Recent Activity</h2>
             <div class="admin-table-wrapper">
                 <table>
                     <thead>
@@ -73,11 +73,12 @@
                             <th>Attendee</th>
                             <th>Email</th>
                             <th>Event</th>
+                            <th>Department</th>
                             <th>Date</th>
                         </tr>
                     </thead>
                     <tbody id="recent-regs">
-                        <tr><td colspan="4" class="loading">Fetching records...</td></tr>
+                        <tr><td colspan="5" class="loading">Syncing records...</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -88,12 +89,12 @@
       <div id="view-events" class="admin-view hidden">
         <header class="admin-header">
             <div>
-                <h1>Event Orchestration</h1>
-                <p class="muted">Create and manage upcoming workshops and summits.</p>
+                <h1>Event Architecture</h1>
+                <p class="muted">Design and publish new world-class orchestrations.</p>
             </div>
         </header>
 
-        <div class="grid" style="grid-template-columns: 350px 1fr;">
+        <div class="grid" style="grid-template-columns: 380px 1fr;">
             <section class="card">
                 <h2>New Orchestration</h2>
                 <form id="event-form" class="auth-form">
@@ -107,23 +108,29 @@
                         <input type="number" id="ev-capacity" placeholder="Capacity" required>
                     </div>
                     <input type="date" id="ev-date" required>
-                    <textarea id="ev-desc" placeholder="Describe the event impact..." style="padding:12px; border-radius:10px; border:1px solid rgba(255,255,255,0.1); background:var(--card); color:inherit; min-height:100px"></textarea>
-                    <button type="submit" class="btn btn-primary">Publish Event</button>
+                    
+                    <label style="display:block; margin: 15px 0 5px 0; font-size: 0.85rem; color:var(--accent)">Event Banner (Storage)</label>
+                    <input type="file" id="ev-image" accept="image/*" style="background: rgba(255,255,255,0.05); padding: 10px;">
+
+                    <textarea id="ev-desc" placeholder="Event description..." style="padding:12px; border-radius:10px; border:1px solid rgba(255,255,255,0.1); background:var(--card); color:inherit; min-height:100px; margin-top:15px"></textarea>
+                    
+                    <button type="submit" id="ev-submit-btn" class="btn btn-primary" style="margin-top:20px;">Publish to Hub</button>
                 </form>
-                <p id="ev-msg" class="muted" style="margin-top:10px; text-align: center;"></p>
+                <p id="ev-msg" class="muted" style="margin-top:12px; text-align: center; font-size: 0.9rem;"></p>
             </section>
 
             <section class="card">
-                <h2>Active Events</h2>
+                <h2>Registry of Events</h2>
                 <div class="admin-table-wrapper">
                     <table>
                         <thead>
                             <tr>
+                                <th>Preview</th>
                                 <th>Title</th>
-                                <th>Type</th>
+                                <th>Category</th>
                                 <th>Date</th>
                                 <th>Cap</th>
-                                <th>Actions</th>
+                                <th>Action</th>
                             </tr>
                         </thead>
                         <tbody id="admin-events-list">
@@ -139,8 +146,8 @@
       <div id="view-registrations" class="admin-view hidden">
         <header class="admin-header">
             <div>
-                <h1>Full Registry</h1>
-                <p class="muted">Detailed list of all session entries across the platform.</p>
+                <h1>Attendee Hub</h1>
+                <p class="muted">Detailed registry of all platform participants.</p>
             </div>
         </header>
         <section class="card">
@@ -149,9 +156,9 @@
                     <thead>
                         <tr>
                             <th>Attendee</th>
-                            <th>Email</th>
+                            <th>Contact / Dept</th>
                             <th>Event</th>
-                            <th>ID</th>
+                            <th>Role</th>
                             <th>Timestamp</th>
                         </tr>
                     </thead>
@@ -183,6 +190,7 @@
         const user = await window.auth.getUser();
         const isAdmin = await window.auth.isAdmin();
         
+        // Strict Redirection
         if (!user || !isAdmin) {
             window.location.href = 'index.html';
             return;
@@ -194,37 +202,55 @@
         refreshDashboard();
         loadAdminEvents();
 
-        // Form Handler
-        document.getElementById('event-form').onsubmit = async (e) => {
+        // Form Handler (Seamless Creation + Image Upload)
+        const eventForm = document.getElementById('event-form');
+        const evSubmitBtn = document.getElementById('ev-submit-btn');
+
+        eventForm.onsubmit = async (e) => {
             e.preventDefault();
             const msg = document.getElementById('ev-msg');
-            const data = {
-                title: document.getElementById('ev-title').value,
-                description: document.getElementById('ev-desc').value,
-                date: document.getElementById('ev-date').value,
-                capacity: parseInt(document.getElementById('ev-capacity').value),
-                category: document.getElementById('ev-category').value
-            };
+            evSubmitBtn.disabled = true;
 
+            const category = document.getElementById('ev-category').value;
+            const fileInput = document.getElementById('ev-image');
+            
             try {
-                msg.textContent = 'Publishing...';
+                msg.textContent = 'Uploading assets...';
+                let imageUrl = '';
+                if (fileInput.files.length > 0) {
+                    imageUrl = await window.db.uploadImage(fileInput.files[0]);
+                }
+
+                const data = {
+                    title: document.getElementById('ev-title').value,
+                    description: document.getElementById('ev-desc').value,
+                    date: document.getElementById('ev-date').value,
+                    capacity: parseInt(document.getElementById('ev-capacity').value),
+                    category: category,
+                    imageUrl: imageUrl
+                };
+
+                msg.textContent = 'Publishing to production...';
                 await window.db.createEvent(data);
-                msg.textContent = 'Event published!';
-                e.target.reset();
+                
+                msg.innerHTML = '<span style="color:var(--accent)">✨ Orchestration Published Successfully!</span>';
+                eventForm.reset();
                 refreshDashboard();
                 loadAdminEvents();
             } catch (err) {
-                msg.textContent = 'Discovery Error: ' + err.message;
+                msg.textContent = 'Sync Error: ' + err.message;
+            } finally {
+                evSubmitBtn.disabled = false;
             }
         };
 
         // CSV Download
         document.getElementById('download').onclick = async () => {
             const regs = await window.db.getAllRegistrations();
-            const csv = ['Name,Email,Event,Date'].concat(regs.map(r=>`${r.userName},${r.userEmail},${r.eventTitle},${r.timestamp}`)).join('\n');
+            const csv = ['Name,Email,Phone,Dept,Role,Event,Date'].concat(regs.map(r=>`${r.userName},${r.userEmail},${r.phone},${r.department},${r.userRole},${r.eventTitle},${r.timestamp}`)).join('\n');
             const a = document.createElement('a');
             a.href = URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
-            a.download = 'platform_extract_' + Date.now() + '.csv';
+            a.download = 'eventorch_extract_' + Date.now() + '.csv';
             a.click();
         };
 
@@ -244,9 +270,18 @@
         [recentTbody, fullTbody].forEach(tb => tb.innerHTML = '');
 
         regs.forEach((reg, i) => {
-            const row = `<tr><td>${reg.userName}</td><td>${reg.userEmail}</td><td>${reg.eventTitle}</td><td>${new Date(reg.timestamp).toLocaleDateString()}</td></tr>`;
+            const row = `<tr><td><strong>${reg.userName}</strong></td><td>${reg.userEmail}</td><td>${reg.eventTitle}</td><td>${reg.department}</td><td>${new Date(reg.timestamp).toLocaleDateString()}</td></tr>`;
             if(i < 5) recentTbody.innerHTML += row;
-            fullTbody.innerHTML += `<tr><td>${reg.userName}</td><td>${reg.userEmail}</td><td>${reg.eventTitle}</td><td><code>${reg.$id}</code></td><td>${new Date(reg.timestamp).toLocaleString()}</td></tr>`;
+            
+            fullTbody.innerHTML += `
+                <tr>
+                    <td><strong>${reg.userName}</strong><br><small class="muted">${reg.userEmail}</small></td>
+                    <td>${reg.phone}<br><small>${reg.department}</small></td>
+                    <td>${reg.eventTitle}</td>
+                    <td><span class="badge professional" style="scale:0.9">${reg.userRole}</span></td>
+                    <td class="muted">${new Date(reg.timestamp).toLocaleString()}</td>
+                </tr>
+            `;
         });
     }
 
@@ -257,13 +292,16 @@
         
         events.forEach(ev => {
             const tr = document.createElement('tr');
+            const preview = ev.imageUrl ? `<img src="${ev.imageUrl}" style="width:40px; height:40px; border-radius:8px; object-fit:cover;">` : '<div style="width:40px; height:40px; border-radius:8px; background:var(--accent-glow);"></div>';
+            
             tr.innerHTML = `
+                <td>${preview}</td>
                 <td><strong>${ev.title}</strong></td>
                 <td><span class="badge ${ev.category.toLowerCase()}">${ev.category}</span></td>
                 <td>${new Date(ev.date).toLocaleDateString()}</td>
                 <td>${ev.capacity}</td>
                 <td>
-                    <button class="btn btn-ghost" style="padding: 5px 10px; scale: 0.8" onclick="deleteEvent('${ev.$id}')">Delete</button>
+                    <button class="btn btn-ghost" style="padding: 5px 12px; scale: 0.8" onclick="deleteEvent('${ev.$id}')">Delete</button>
                 </td>
             `;
             list.appendChild(tr);
@@ -271,7 +309,7 @@
     }
 
     window.deleteEvent = async (id) => {
-        if(!confirm('Permanently delete this event?')) return;
+        if(!confirm('Permanently remove this orchestration?')) return;
         try {
             await window.db.deleteEvent(id);
             loadAdminEvents();

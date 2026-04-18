@@ -52,6 +52,19 @@ const Auth = {
         } catch (error) {
             return false;
         }
+    },
+
+    async handleAuthRedirect() {
+        const isAdmin = await this.isAdmin();
+        if (isAdmin) {
+            if (!window.location.pathname.includes('admin.html')) {
+                window.location.href = 'admin.html';
+            }
+        } else {
+            if (window.location.pathname.includes('admin.html')) {
+                window.location.href = 'index.html';
+            }
+        }
     }
 };
 
